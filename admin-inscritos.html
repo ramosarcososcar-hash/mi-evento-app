@@ -2,148 +2,134 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Lista de Inscritos por Evento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Gestión de Inscritos</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-    .evento-seccion { background: white; margin-bottom: 30px; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
-    th { background-color: #f8f9fa; color: #333; }
-    .sin-inscritos { color: #888; font-style: italic; }
+    :root { 
+      --primary: #10b981; 
+      --nav: #0f172a; 
+      --bg: #f8fafc;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-top: 100px; color: #1e293b; }
+    
+    /* Navbar Moderna */
+    .navbar { position: fixed; top: 0; width: 100%; background: var(--nav); backdrop-filter: blur(10px); z-index: 1000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; padding: 16px 24px; align-items: center; }
+    .nav-brand { color: var(--primary); font-weight: 800; font-size: 1.5rem; text-decoration: none; }
+    .nav-links a { color: #f8fafc; text-decoration: none; margin-left: 24px; font-size: 0.9rem; font-weight: 500; transition: 0.2s; }
+    .nav-links a:hover { color: var(--primary); }
+
+    .container { max-width: 1000px; margin: auto; padding: 20px; }
+    
+    /* Tarjetas de Actividades */
+    .evento-card { background: white; border-radius: 20px; padding: 30px; margin-bottom: 40px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .evento-header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .evento-titulo { font-size: 1.4rem; font-weight: 700; color: #0f172a; }
+
+    /* Tabla de Inscritos */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 14px; border-bottom: 1px solid #f1f5f9; }
+    th { color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .empty-msg { color: #94a3b8; font-style: italic; text-align: center; padding: 20px; }
   </style>
 </head>
 <body>
 
-  <h1>📊 Panel de Control: Inscripciones</h1>
-  <div id="lista-inscritos">Cargando datos...</div>
-
-  <script>
-    const SUPABASE_URL = "https://hguedfbzspebcyxibers.supabase.co";
-    const SUPABASE_KEY = "TU_ANON_KEY"; 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    async function obtenerDatos() {
-      const container = document.getElementById('lista-inscritos');
-      
-      // 1. Traemos los eventos y sus inscritos relacionados
-      const { data: eventos, error } = await supabase
-        .from('eventos')
-        .select(`
-          id,
-          titulo,
-          fecha,
-          inscritos (
-            nombre,
-            apellido1
-          )
-        `);
-
-      if (error) {
-        container.innerHTML = "Error: " + error.message;
-        return;
-      }
-
-      container.innerHTML = "";
-
-      eventos.forEach(evento => {
-        const div = document.createElement('div');
-        div.className = 'evento-seccion';
-        
-        let tablaHtml = `
-          <h3>${evento.titulo} (${new Date(evento.fecha).toLocaleDateString()})</h3>
-          <p>Total apuntados: ${evento.inscritos.length}</p>
-        `;
-
-        if (evento.inscritos.length === 0) {
-          tablaHtml += `<p class="sin-inscritos">No hay nadie apuntado todavía.</p>`;
-        } else {
-          tablaHtml += `
-            <table>
-              <thead>
-                <tr><th>Nombre</th><th>Primer Apellido</th></tr>
-              </thead>
-              <tbody>
-                ${evento.inscritos.map(i => `<tr><td>${i.nombre}</td><td>${i.apellido1}</td></tr>`).join('')}
-              </tbody>
-            </table>
-          `;
-        }
-
-        div.innerHTML = tablaHtml;
-        container.appendChild(div);
-      });
-    }
-
-    obtenerDatos();
-  </script>
-</body>
 <nav class="navbar">
   <div class="nav-container">
-    <a href="index.html" class="nav-link nav-brand">🚀 EventosApp</a>
-    <div class="nav-menu">
-      <a href="index.html" class="nav-link">🏠 Inicio</a>
-      <a href="crear-evento.html" class="nav-link">➕ Crear</a>
-      <a href="admin-inscritos.html" class="nav-link">📊 Inscritos</a>
+    <a href="index.html" class="nav-brand">🚀 EVENTOS<span>APP</span></a>
+    <div class="nav-links">
+      <a href="index.html">Inicio</a>
+      <a href="crear-evento.html">Crear</a>
+      <a href="admin-inscritos.html" style="color: var(--primary);">Inscritos</a>
     </div>
   </div>
 </nav>
 
-<style>
-  /* Reset de margen para que la barra pegue arriba */
-  body { margin: 0; padding-top: 80px; } 
+<div class="container">
+  <h1 style="margin-bottom: 30px;">Panel de Gestión: Inscripciones</h1>
+  <div id="content">Cargando actividades e inscritos...</div>
+</div>
 
-  .navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    background: rgba(26, 26, 26, 0.8); /* Fondo oscuro con transparencia */
-    backdrop-filter: blur(10px); /* Efecto de desenfoque moderno */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+<script>
+  const SUPABASE_URL = "https://hguedfbzspebcyxibers.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndWVkZmJ6c3BlYmN5eGliZXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjU5MDQsImV4cCI6MjA4NjQwMTkwNH0.oSRQL0p0ziaRvuyg8oHzQxPL3T1ZJG0n86ZA_a82eFw";
+  
+  // Usamos supabaseClient para evitar el error de identificador ya declarado
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function renderData() {
+    const content = document.getElementById('content');
+    
+    // Consulta relacional: Trae eventos y sus inscritos asociados
+    const { data, error } = await supabaseClient
+      .from('eventos')
+      .select(`
+        id,
+        titulo,
+        fecha,
+        inscritos (
+          nombre,
+          apellido1
+        )
+      `)
+      .order('fecha', { ascending: true });
+
+    if (error) {
+      content.innerHTML = `<p style="color:red">Error al cargar datos: ${error.message}</p>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      content.innerHTML = "<p>No hay actividades creadas todavía.</p>";
+      return;
+    }
+
+    content.innerHTML = data.map(ev => {
+      const listaAlumnos = ev.inscritos && ev.inscritos.length > 0;
+      
+      return `
+        <div class="evento-card">
+          <div class="evento-header">
+            <div>
+              <div class="evento-titulo">${ev.titulo}</div>
+              <div style="font-size: 0.9rem; color: #64748b;">📅 ${new Date(ev.fecha).toLocaleDateString()}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre del Alumno</th>
+                <th>Primer Apellido</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${listaAlumnos 
+                ? ev.inscritos.map(i => `
+                    <tr>
+                      <td>${i.nombre}</td>
+                      <td>${i.apellido1}</td>
+                    </tr>
+                  `).join('')
+                : '<tr><td colspan="2" class="empty-msg">No hay alumnos inscritos en esta actividad.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join('');
   }
 
-  .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 25px;
-  }
+  renderData();
+</script>
 
-  .nav-brand {
-    font-size: 1.5rem;
-    color: #24b47e !important;
-    letter-spacing: -1px;
-  }
-
-  .nav-menu {
-    display: flex;
-    gap: 20px;
-  }
-
-  .nav-link {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    padding: 8px 12px;
-    border-radius: 8px;
-  }
-
-  .nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #24b47e;
-  }
-
-  /* Responsive para móviles */
-  @media (max-width: 600px) {
-    .nav-container { flex-direction: column; gap: 10px; }
-    body { padding-top: 120px; }
-  }
-</style>
+</body>
 </html>

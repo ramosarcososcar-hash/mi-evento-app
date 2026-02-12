@@ -3,172 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Crear Eventos</title>
+  <title>Admin - Crear Evento</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px; }
-    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-    h2 { color: #1c1e21; margin-top: 0; }
-    label { display: block; margin-top: 15px; font-weight: 600; font-size: 14px; color: #4b4b4b; }
-    input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-    button { width: 100%; padding: 14px; background: #24b47e; color: white; border: none; border-radius: 8px; margin-top: 25px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s; }
-    button:hover { background: #1a8f63; }
-    #estado { margin-top: 15px; font-size: 14px; text-align: center; }
+    :root { --primary: #10b981; --nav: #0f172a; }
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; margin: 0; padding-top: 120px; display: flex; justify-content: center; }
+    
+    .navbar { position: fixed; top: 0; width: 100%; background: var(--nav); z-index: 1000; padding: 16px 0; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; padding: 0 24px; align-items: center; }
+    .nav-brand { color: var(--primary); font-weight: 800; font-size: 1.5rem; text-decoration: none; }
+    .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9rem; }
+
+    .form-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); width: 100%; max-width: 450px; border: 1px solid #e2e8f0; }
+    h2 { margin-top: 0; font-size: 1.5rem; color: #1e293b; text-align: center; }
+    label { font-size: 0.85rem; font-weight: 600; color: #64748b; margin-top: 15px; display: block; }
+    input { width: 100%; padding: 12px; margin: 8px 0 16px; border: 1px solid #cbd5e1; border-radius: 12px; box-sizing: border-box; }
+    button { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 1rem; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>🚀 Crear Nuevo Evento</h2>
-  
-  <label>Título del Evento</label>
-  <input type="text" id="titulo" placeholder="Ej: Comedor Escolar Lunes">
-  
-  <label>Fecha</label>
-  <input type="date" id="fecha">
-  
-  <label>Aforo Máximo</label>
-  <input type="number" id="aforo" placeholder="Cantidad de personas">
-  
-  <label>Imagen del Evento</label>
-  <input type="file" id="foto" accept="image/*">
-  
-  <button id="btnPublicar">Publicar Evento</button>
-  <p id="estado"></p>
-</div>
-
-<script>
-  const SUPABASE_URL = "https://hguedfbzspebcyxibers.supabase.co";
-  const SUPABASE_KEY = "TU_ANON_KEY"; // LA MISMA QUE USAS EN INDEX.HTML
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  document.getElementById('btnPublicar').addEventListener('click', async () => {
-    const titulo = document.getElementById('titulo').value;
-    const fecha = document.getElementById('fecha').value;
-    const aforo = document.getElementById('aforo').value;
-    const fotoFile = document.getElementById('foto').files[0];
-    const estado = document.getElementById('estado');
-
-    if (!titulo || !fecha || !aforo || !fotoFile) {
-      alert("Por favor, rellena todos los campos e incluye una imagen.");
-      return;
-    }
-
-    estado.style.color = "blue";
-    estado.innerText = "⏳ Subiendo imagen...";
-
-    try {
-      // 1. Subir imagen
-      const fileExt = fotoFile.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `eventos/${fileName}`;
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('imagenes-eventos')
-        .upload(filePath, fotoFile);
-
-      if (uploadError) throw uploadError;
-
-      // 2. Obtener URL pública
-      const { data: urlData } = supabase.storage
-        .from('imagenes-eventos')
-        .getPublicUrl(filePath);
-      
-      const fotoUrl = urlData.publicUrl;
-
-      // 3. Guardar en Base de Datos
-      estado.innerText = "💾 Guardando datos del evento...";
-      const { error: dbError } = await supabase
-        .from('eventos')
-        .insert([{ 
-          titulo, 
-          fecha, 
-          aforo: parseInt(aforo), 
-          imagen_url: fotoUrl 
-        }]);
-
-      if (dbError) throw dbError;
-
-      estado.style.color = "green";
-      estado.innerText = "✅ ¡Evento publicado con éxito!";
-      
-      // Limpiar formulario
-      document.querySelectorAll('input').forEach(i => i.value = "");
-
-    } catch (error) {
-      estado.style.color = "red";
-      estado.innerText = "❌ Error: " + error.message;
-      console.error(error);
-    }
-  });
-</script>
-</body>
 <nav class="navbar">
   <div class="nav-container">
-    <a href="index.html" class="nav-link nav-brand">🚀 EventosApp</a>
-    <div class="nav-menu">
-      <a href="index.html" class="nav-link">🏠 Inicio</a>
-      <a href="crear-evento.html" class="nav-link">➕ Crear</a>
-      <a href="admin-inscritos.html" class="nav-link">📊 Inscritos</a>
+    <a href="index.html" class="nav-brand">🚀 EVENTOSAPP</a>
+    <div class="nav-links">
+      <a href="index.html">Inicio</a>
+      <a href="crear-evento.html">Crear</a>
+      <a href="admin-inscritos.html">Inscritos</a>
     </div>
   </div>
 </nav>
 
-<style>
-  /* Reset de margen para que la barra pegue arriba */
-  body { margin: 0; padding-top: 80px; } 
+<div class="form-card">
+  <h2>Crear Nuevo Evento</h2>
+  <label>Nombre de la Actividad</label>
+  <input type="text" id="t" placeholder="Ej: Comedor Lunes">
+  <label>Fecha</label>
+  <input type="date" id="f">
+  <label>Aforo Máximo</label>
+  <input type="number" id="a" placeholder="Ej: 30">
+  <label>Imagen del Evento</label>
+  <input type="file" id="img" accept="image/*">
+  <button id="go">Publicar Evento</button>
+  <p id="st" style="text-align:center; font-weight: 600; margin-top: 15px;"></p>
+</div>
 
-  .navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    background: rgba(26, 26, 26, 0.8); /* Fondo oscuro con transparencia */
-    backdrop-filter: blur(10px); /* Efecto de desenfoque moderno */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  }
+<script>
+  const SUPABASE_URL = "https://hguedfbzspebcyxibers.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndWVkZmJ6c3BlYmN5eGliZXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjU5MDQsImV4cCI6MjA4NjQwMTkwNH0.oSRQL0p0ziaRvuyg8oHzQxPL3T1ZJG0n86ZA_a82eFw";
+  
+  // Usamos supabaseClient para evitar conflictos globales
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 25px;
-  }
+  document.getElementById('go').onclick = async () => {
+    const t = document.getElementById('t').value;
+    const f = document.getElementById('f').value;
+    const a = document.getElementById('a').value;
+    const file = document.getElementById('img').files[0];
+    const st = document.getElementById('st');
 
-  .nav-brand {
-    font-size: 1.5rem;
-    color: #24b47e !important;
-    letter-spacing: -1px;
-  }
+    if(!t || !f || !file) return alert("Por favor completa todos los campos");
 
-  .nav-menu {
-    display: flex;
-    gap: 20px;
-  }
+    st.innerText = "⏳ Subiendo imagen...";
+    st.style.color = "blue";
+    
+    try {
+        const path = `eventos/${Date.now()}_${file.name}`;
+        const { error: upError } = await supabaseClient.storage.from('imagenes-eventos').upload(path, file);
+        if(upError) throw upError;
 
-  .nav-link {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    padding: 8px 12px;
-    border-radius: 8px;
-  }
+        const { data: urlData } = supabaseClient.storage.from('imagenes-eventos').getPublicUrl(path);
+        
+        st.innerText = "💾 Guardando datos...";
+        const { error: dbError } = await supabaseClient.from('eventos').insert([{ 
+            titulo: t, 
+            fecha: f, 
+            aforo: a, 
+            imagen_url: urlData.publicUrl 
+        }]);
 
-  .nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #24b47e;
-  }
-
-  /* Responsive para móviles */
-  @media (max-width: 600px) {
-    .nav-container { flex-direction: column; gap: 10px; }
-    body { padding-top: 120px; }
-  }
-</style>
+        if(dbError) throw dbError;
+        
+        st.innerText = "✅ ¡Evento publicado!";
+        st.style.color = "green";
+        document.querySelectorAll('input').forEach(i => i.value = "");
+    } catch(err) {
+        st.innerText = "❌ Error: " + err.message;
+        st.style.color = "red";
+    }
+  };
+</script>
+</body>
 </html>
