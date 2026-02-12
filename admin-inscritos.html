@@ -3,41 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Gestión de Inscritos</title>
+  <title>Admin - Gestión</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { --primary: #10b981; --nav: #0f172a; --bg: #f8fafc; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-top: 100px; color: #1e293b; }
-    .navbar { position: fixed; top: 0; width: 100%; background: var(--nav); backdrop-filter: blur(10px); z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; padding: 16px 24px; align-items: center; }
-    .nav-brand { color: var(--primary); font-weight: 800; font-size: 1.5rem; text-decoration: none; }
-    .nav-links a { color: #f8fafc; text-decoration: none; margin-left: 24px; font-size: 0.9rem; font-weight: 500; }
-    .container { max-width: 1000px; margin: auto; padding: 20px; }
-    .evento-card { background: white; border-radius: 20px; padding: 30px; margin-bottom: 40px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .evento-header { border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
-    .evento-titulo { font-size: 1.4rem; font-weight: 700; color: #0f172a; }
+    :root { --primary: #10b981; --danger: #ef4444; --nav: #0f172a; --bg: #f8fafc; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-top: 100px; }
+    .navbar { position: fixed; top: 0; width: 100%; background: var(--nav); z-index: 1000; padding: 16px 0; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; padding: 0 24px; align-items: center; }
+    .nav-brand { color: var(--primary); font-weight: 800; text-decoration: none; font-size: 1.5rem; }
+    .nav-links a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9rem; }
+    .container { max-width: 900px; margin: auto; padding: 20px; }
+    .card { background: white; border-radius: 20px; padding: 25px; margin-bottom: 30px; border: 1px solid #e2e8f0; }
+    .header { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+    .img-mini { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 14px; border-bottom: 1px solid #f1f5f9; }
-    th { color: #64748b; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; }
-    .empty-msg { color: #94a3b8; font-style: italic; text-align: center; padding: 20px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+    .btn-x { color: var(--danger); border: 1px solid #fee2e2; background: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+    .btn-x:hover { background: #fee2e2; }
   </style>
 </head>
 <body>
 
 <nav class="navbar">
   <div class="nav-container">
-    <a href="index.html" class="nav-brand">🚀 EVENTOS<span>APP</span></a>
-    <div class="nav-links">
-      <a href="index.html">Inicio</a>
-      <a href="crear-evento.html">Crear</a>
-      <a href="admin-inscritos.html" style="color: var(--primary);">Inscritos</a>
-    </div>
+    <a href="index.html" class="nav-brand">🚀 EVENTOSAPP</a>
+    <div class="nav-links"><a href="index.html">Inicio</a><a href="crear-evento.html">Crear</a><a href="admin-inscritos.html" style="color:var(--primary)">Inscritos</a></div>
   </div>
 </nav>
 
 <div class="container">
-  <h1 style="margin-bottom: 30px;">Panel de Gestión: Inscripciones</h1>
-  <div id="content">Cargando datos...</div>
+  <h1>Gestión de Inscritos</h1>
+  <div id="content">Cargando...</div>
 </div>
 
 <script>
@@ -45,47 +41,40 @@
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndWVkZmJ6c3BlYmN5eGliZXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjU5MDQsImV4cCI6MjA4NjQwMTkwNH0.oSRQL0p0ziaRvuyg8oHzQxPL3T1ZJG0n86ZA_a82eFw";
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  async function renderData() {
-    const content = document.getElementById('content');
-    
-    // CONSULTA EXPLÍCITA: Usamos el nombre de la relación 'fk_evento_unico'
-    const { data, error } = await supabaseClient
-      .from('eventos')
-      .select(`
-        id,
-        titulo,
-        fecha,
-        inscritos (
-          nombre,
-          apellido1
-        )
-      `)
-      .order('fecha', { ascending: true });
-
-    if (error) {
-      console.error(error);
-      content.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
-      return;
-    }
-
-    content.innerHTML = data.map(ev => `
-      <div class="evento-card">
-        <div class="evento-header">
-            <div class="evento-titulo">${ev.titulo}</div>
-            <div style="font-size: 0.9rem; color: #64748b;">📅 ${new Date(ev.fecha).toLocaleDateString()}</div>
+  async function render() {
+    const { data, error } = await supabaseClient.from('eventos').select('id, titulo, imagen_url, inscritos!evento_id(id, nombre, apellido1)');
+    if(error) return;
+    document.getElementById('content').innerHTML = data.map(ev => `
+      <div class="card" id="c-${ev.id}">
+        <div class="header">
+          <img src="${ev.imagen_url}" class="img-mini">
+          <div style="flex-grow:1"><h3>${ev.titulo}</h3></div>
+          <button onclick="borrarAct('${ev.id}')" style="background:red; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer">Borrar Actividad</button>
         </div>
         <table>
-          <thead><tr><th>Nombre</th><th>Apellido</th></tr></thead>
-          <tbody>
-            ${ev.inscritos && ev.inscritos.length > 0 
-                ? ev.inscritos.map(i => `<tr><td>${i.nombre}</td><td>${i.apellido1}</td></tr>`).join('')
-                : '<tr><td colspan="2" class="empty-msg">Sin inscritos.</td></tr>'}
-          </tbody>
+          ${ev.inscritos.map(i => `
+            <tr id="r-${i.id}">
+              <td>${i.nombre} ${i.apellido1}</td>
+              <td style="text-align:right"><button class="btn-x" onclick="borrarIns('${i.id}')">Eliminar</button></td>
+            </tr>`).join('')}
         </table>
       </div>
     `).join('');
   }
-  renderData();
+
+  async function borrarIns(id) {
+    if(!confirm("¿Eliminar alumno?")) return;
+    const { error } = await supabaseClient.from('inscritos').delete().eq('id', id);
+    if(!error) document.getElementById(`r-${id}`).remove();
+  }
+
+  async function borrarAct(id) {
+    if(!confirm("¿Borrar actividad y todos sus inscritos?")) return;
+    const { error } = await supabaseClient.from('eventos').delete().eq('id', id);
+    if(!error) document.getElementById(`c-${id}`).remove();
+  }
+
+  render();
 </script>
 </body>
 </html>
