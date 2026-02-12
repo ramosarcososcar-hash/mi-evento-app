@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evento</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      padding: 40px;
+      background: #f2f2f2;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #24b47e; /* Color Supabase */
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background-color: #1a8f63;
+    }
+    #mensaje {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+ 
+  <h1>🎉 Evento Especial</h1>
+  <img src="https://via.placeholder.com/150" alt="Evento" style="border-radius: 10px;">
+  
+  <p>Introduce tu nombre para inscribirte:</p>
+ 
+  <input type="text" id="nombre" placeholder="Tu nombre">
+  <br>
+  <button id="btnGuardar">Enviar</button>
+ 
+  <p id="mensaje"></p>
+ 
+  <script>
+    // 1. Configuración
+    const SUPABASE_URL = "https://hguedfbzspebcyxibers.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndWVkZmJ6c3BlYmN5eGliZXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjU5MDQsImV4cCI6MjA4NjQwMTkwNH0.oSRQL0p0ziaRvuyg8oHzQxPL3T1ZJG0n86ZA_a82eFw";
+
+    // 2. Inicializar Cliente
+    // Usamos window.supabase para asegurarnos de que accedemos a la global
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 3. Función Guardar
+    async function guardar() {
+      const nombreInput = document.getElementById("nombre");
+      const nombre = nombreInput.value.trim();
+      const mensaje = document.getElementById("mensaje");
+
+      if (!nombre) {
+        alert("Por favor, escribe tu nombre");
+        return;
+      }
+
+      mensaje.innerText = "Guardando...";
+
+      // INTENTO DE INSERTAR
+      const { data, error } = await client
+        .from("inscritos")
+        .insert([{ nombre: nombre }])
+        .select(); // IMPORTANTE: Esto requiere la política de SELECT activada
+
+      console.log("Respuesta Supabase:", { data, error });
+
+      if (error) {
+        mensaje.style.color = "red";
+        mensaje.innerText = "Error: " + error.message;
+        console.error("Detalle del error:", error);
+      } else {
+        mensaje.style.color = "green";
+        mensaje.innerText = "¡Guardado correctamente! 🎉";
+        nombreInput.value = ""; // Limpiar campo
+      }
+    }
+
+    // Asignar evento al botón
+    document.getElementById("btnGuardar").addEventListener("click", guardar);
+  </script>
+ 
+</body>
+</html>
+
+
