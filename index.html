@@ -3,98 +3,248 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evento</title>
-
+  <title>Eventos Disponibles</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      padding: 40px;
-      background: #f2f2f2;
+    :root {
+      --primary: #24b47e;
+      --primary-hover: #1a8f63;
+      --bg: #f4f7f6;
+      --text: #2c3e50;
     }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      margin: 10px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+    header { text-align: center; padding: 40px 0; }
+    h1 { margin: 0; font-size: 2.5rem; color: #1a1a1a; }
+    
+    .grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+      gap: 30px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
     }
-    button {
-      background-color: #24b47e; /* Color Supabase */
-      color: white;
-      cursor: pointer;
-      border: none;
+    
+    .card { 
+      background: white; 
+      border-radius: 16px; 
+      overflow: hidden; 
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
     }
-    button:hover {
-      background-color: #1a8f63;
+    .card:hover { transform: translateY(-10px); }
+    
+    .card-img { width: 100%; height: 220px; object-fit: cover; background: #ddd; }
+    
+    .card-content { padding: 24px; flex-grow: 1; }
+    .card-content h3 { margin: 0 0 10px; font-size: 1.5rem; }
+    .meta-info { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 20px; display: flex; flex-direction: column; gap: 5px; }
+    
+    .form-box { border-top: 1px solid #eee; padding-top: 20px; }
+    input { 
+      width: 100%; 
+      padding: 12px; 
+      margin-bottom: 12px; 
+      border: 1px solid #dfe6e9; 
+      border-radius: 8px; 
+      box-sizing: border-box; 
+      font-size: 1rem;
     }
-    #mensaje {
-      margin-top: 20px;
-      font-weight: bold;
+    button { 
+      width: 100%; 
+      padding: 14px; 
+      background: var(--primary); 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-weight: bold; 
+      font-size: 1rem;
+      transition: background 0.2s;
     }
+    button:hover { background: var(--primary-hover); }
+    
+    .msg { margin-top: 15px; font-size: 0.9rem; text-align: center; min-height: 20px; }
+    .loading { text-align: center; grid-column: 1 / -1; font-size: 1.2rem; padding: 50px; }
   </style>
 </head>
 <body>
- 
-  <h1>🎉 Evento Especial</h1>
-  <img src="https://via.placeholder.com/150" alt="Evento" style="border-radius: 10px;">
+
+  <header>
+    <h1>📅 Próximos Eventos</h1>
+    <p>Inscríbete en nuestras actividades fácilmente</p>
+  </header>
   
-  <p>Introduce tu nombre para inscribirte:</p>
- 
-  <input type="text" id="nombre" placeholder="Tu nombre">
-  <br>
-  <button id="btnGuardar">Enviar</button>
- 
-  <p id="mensaje"></p>
- 
+  <div id="eventos-container" class="grid">
+    <div class="loading">Cargando eventos...</div>
+  </div>
+
   <script>
-    // 1. Configuración
+    // Configuración con tu clave actualizada
     const SUPABASE_URL = "https://hguedfbzspebcyxibers.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhndWVkZmJ6c3BlYmN5eGliZXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA4MjU5MDQsImV4cCI6MjA4NjQwMTkwNH0.oSRQL0p0ziaRvuyg8oHzQxPL3T1ZJG0n86ZA_a82eFw";
-
-    // 2. Inicializar Cliente
-    // Usamos window.supabase para asegurarnos de que accedemos a la global
+    
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 3. Función Guardar
-    async function guardar() {
-      const nombreInput = document.getElementById("nombre");
-      const nombre = nombreInput.value.trim();
-      const mensaje = document.getElementById("mensaje");
+    // Cargar eventos desde Supabase
+    async function cargarEventos() {
+      const container = document.getElementById('eventos-container');
+      
+      const { data: eventos, error } = await client
+        .from('eventos')
+        .select('*')
+        .order('fecha', { ascending: true });
 
-      if (!nombre) {
-        alert("Por favor, escribe tu nombre");
+      if (error) {
+        container.innerHTML = `<div class="loading" style="color:red">Error al conectar con la base de datos.</div>`;
         return;
       }
 
-      mensaje.innerText = "Guardando...";
+      if (eventos.length === 0) {
+        container.innerHTML = `<div class="loading">No hay eventos disponibles en este momento.</div>`;
+        return;
+      }
 
-      // INTENTO DE INSERTAR
-      const { data, error } = await client
-        .from("inscritos")
-        .insert([{ nombre: nombre }])
-        .select(); // IMPORTANTE: Esto requiere la política de SELECT activada
+      container.innerHTML = ""; // Limpiar el cargando
 
-      console.log("Respuesta Supabase:", { data, error });
+      eventos.forEach(evento => {
+        // Formatear la fecha
+        const fechaObj = new Date(evento.fecha);
+        const fechaTexto = fechaObj.toLocaleDateString('es-ES', { 
+          weekday: 'long', day: 'numeric', month: 'long' 
+        });
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img class="card-img" src="${evento.imagen_url || 'https://via.placeholder.com/400x250?text=Evento'}" alt="${evento.titulo}">
+          <div class="card-content">
+            <h3>${evento.titulo}</h3>
+            <div class="meta-info">
+              <span>🗓️ ${fechaTexto}</span>
+              <span>👥 Aforo máximo: ${evento.aforo} plazas</span>
+            </div>
+            
+            <div class="form-box">
+              <input type="text" id="nombre-${evento.id}" placeholder="Tu nombre">
+              <input type="text" id="apellido-${evento.id}" placeholder="Tu apellido">
+              <button onclick="inscribirse('${evento.id}')">Inscribirme ahora</button>
+              <div id="msg-${evento.id}" class="msg"></div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Registrar inscripción vinculada al evento
+    async function inscribirse(eventoId) {
+      const nombreInput = document.getElementById(`nombre-${eventoId}`);
+      const apellidoInput = document.getElementById(`apellido-${eventoId}`);
+      const msg = document.getElementById(`msg-${eventoId}`);
+
+      const nombre = nombreInput.value.trim();
+      const apellido = apellidoInput.value.trim();
+
+      if (!nombre || !apellido) {
+        alert("Por favor, rellena todos los campos.");
+        return;
+      }
+
+      msg.innerText = "Enviando...";
+      msg.style.color = "blue";
+
+      const { error } = await client
+        .from('inscritos')
+        .insert([{ 
+          nombre: nombre, 
+          apellido1: apellido, 
+          evento_id: eventoId 
+        }]);
 
       if (error) {
-        mensaje.style.color = "red";
-        mensaje.innerText = "Error: " + error.message;
-        console.error("Detalle del error:", error);
+        msg.innerText = "❌ Error: " + error.message;
+        msg.style.color = "red";
       } else {
-        mensaje.style.color = "green";
-        mensaje.innerText = "¡Guardado correctamente! 🎉";
-        nombreInput.value = ""; // Limpiar campo
+        msg.innerText = "✅ ¡Inscrito correctamente!";
+        msg.style.color = "green";
+        nombreInput.value = "";
+        apellidoInput.value = "";
       }
     }
 
-    // Asignar evento al botón
-    document.getElementById("btnGuardar").addEventListener("click", guardar);
+    cargarEventos();
   </script>
- 
 </body>
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="index.html" class="nav-link nav-brand">🚀 EventosApp</a>
+    <div class="nav-menu">
+      <a href="index.html" class="nav-link">🏠 Inicio</a>
+      <a href="crear-evento.html" class="nav-link">➕ Crear</a>
+      <a href="admin-inscritos.html" class="nav-link">📊 Inscritos</a>
+    </div>
+  </div>
+</nav>
+
+<style>
+  /* Reset de margen para que la barra pegue arriba */
+  body { margin: 0; padding-top: 80px; } 
+
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(26, 26, 26, 0.8); /* Fondo oscuro con transparencia */
+    backdrop-filter: blur(10px); /* Efecto de desenfoque moderno */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+  }
+
+  .nav-brand {
+    font-size: 1.5rem;
+    color: #24b47e !important;
+    letter-spacing: -1px;
+  }
+
+  .nav-menu {
+    display: flex;
+    gap: 20px;
+  }
+
+  .nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+
+  .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #24b47e;
+  }
+
+  /* Responsive para móviles */
+  @media (max-width: 600px) {
+    .nav-container { flex-direction: column; gap: 10px; }
+    body { padding-top: 120px; }
+  }
+</style>
 </html>
 
 

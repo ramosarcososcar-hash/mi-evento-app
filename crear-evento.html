@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Crear Eventos</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px; }
+    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+    h2 { color: #1c1e21; margin-top: 0; }
+    label { display: block; margin-top: 15px; font-weight: 600; font-size: 14px; color: #4b4b4b; }
+    input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+    button { width: 100%; padding: 14px; background: #24b47e; color: white; border: none; border-radius: 8px; margin-top: 25px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s; }
+    button:hover { background: #1a8f63; }
+    #estado { margin-top: 15px; font-size: 14px; text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>🚀 Crear Nuevo Evento</h2>
+  
+  <label>Título del Evento</label>
+  <input type="text" id="titulo" placeholder="Ej: Comedor Escolar Lunes">
+  
+  <label>Fecha</label>
+  <input type="date" id="fecha">
+  
+  <label>Aforo Máximo</label>
+  <input type="number" id="aforo" placeholder="Cantidad de personas">
+  
+  <label>Imagen del Evento</label>
+  <input type="file" id="foto" accept="image/*">
+  
+  <button id="btnPublicar">Publicar Evento</button>
+  <p id="estado"></p>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://hguedfbzspebcyxibers.supabase.co";
+  const SUPABASE_KEY = "TU_ANON_KEY"; // LA MISMA QUE USAS EN INDEX.HTML
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  document.getElementById('btnPublicar').addEventListener('click', async () => {
+    const titulo = document.getElementById('titulo').value;
+    const fecha = document.getElementById('fecha').value;
+    const aforo = document.getElementById('aforo').value;
+    const fotoFile = document.getElementById('foto').files[0];
+    const estado = document.getElementById('estado');
+
+    if (!titulo || !fecha || !aforo || !fotoFile) {
+      alert("Por favor, rellena todos los campos e incluye una imagen.");
+      return;
+    }
+
+    estado.style.color = "blue";
+    estado.innerText = "⏳ Subiendo imagen...";
+
+    try {
+      // 1. Subir imagen
+      const fileExt = fotoFile.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `eventos/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('imagenes-eventos')
+        .upload(filePath, fotoFile);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Obtener URL pública
+      const { data: urlData } = supabase.storage
+        .from('imagenes-eventos')
+        .getPublicUrl(filePath);
+      
+      const fotoUrl = urlData.publicUrl;
+
+      // 3. Guardar en Base de Datos
+      estado.innerText = "💾 Guardando datos del evento...";
+      const { error: dbError } = await supabase
+        .from('eventos')
+        .insert([{ 
+          titulo, 
+          fecha, 
+          aforo: parseInt(aforo), 
+          imagen_url: fotoUrl 
+        }]);
+
+      if (dbError) throw dbError;
+
+      estado.style.color = "green";
+      estado.innerText = "✅ ¡Evento publicado con éxito!";
+      
+      // Limpiar formulario
+      document.querySelectorAll('input').forEach(i => i.value = "");
+
+    } catch (error) {
+      estado.style.color = "red";
+      estado.innerText = "❌ Error: " + error.message;
+      console.error(error);
+    }
+  });
+</script>
+</body>
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="index.html" class="nav-link nav-brand">🚀 EventosApp</a>
+    <div class="nav-menu">
+      <a href="index.html" class="nav-link">🏠 Inicio</a>
+      <a href="crear-evento.html" class="nav-link">➕ Crear</a>
+      <a href="admin-inscritos.html" class="nav-link">📊 Inscritos</a>
+    </div>
+  </div>
+</nav>
+
+<style>
+  /* Reset de margen para que la barra pegue arriba */
+  body { margin: 0; padding-top: 80px; } 
+
+  .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(26, 26, 26, 0.8); /* Fondo oscuro con transparencia */
+    backdrop-filter: blur(10px); /* Efecto de desenfoque moderno */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+  }
+
+  .nav-brand {
+    font-size: 1.5rem;
+    color: #24b47e !important;
+    letter-spacing: -1px;
+  }
+
+  .nav-menu {
+    display: flex;
+    gap: 20px;
+  }
+
+  .nav-link {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+
+  .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #24b47e;
+  }
+
+  /* Responsive para móviles */
+  @media (max-width: 600px) {
+    .nav-container { flex-direction: column; gap: 10px; }
+    body { padding-top: 120px; }
+  }
+</style>
+</html>
